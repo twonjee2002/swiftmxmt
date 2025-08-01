@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -50,7 +50,55 @@
     You can uncomment this block and click 'Convert' to see the mock MT output.
 -->
 <!-- 
-Sample mx message here
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+    <FIToFICstmrCdtTrf>
+        <GrpHdr>
+            <MsgId>MX-TO-MT-CONVERTER-20250729</MsgId>
+            <CreDtTm>2025-07-29T10:00:00</CreDtTm>
+        </GrpHdr>
+        <CdtTrfTxInf>
+            <PmtId>
+                <EndToEndId>E2E-ID-12345</EndToEndId>
+            </PmtId>
+            <IntrBkSttlmAmt Ccy="USD">1234.56</IntrBkSttlmAmt>
+            <IntrBkSttlmDt>2025-07-29</IntrBkSttlmDt>
+            <Dbtr>
+                <Nm>John Doe</Nm>
+                <PstlAdr>
+                    <StrtNm>Main Street</StrtNm>
+                    <BldgNb>123</BldgNb>
+                    <PstCd>10001</PstCd>
+                    <TwnNm>New York</TwnNm>
+                    <Ctry>US</Ctry>
+                </PstlAdr>
+            </Dbtr>
+            <DbtrAcct>
+                <Id>
+                    <Othr>
+                        <Id>1234567890</Id>
+                    </Othr>
+                </Id>
+            </DbtrAcct>
+            <Cdtr>
+                <Nm>Jane Smith</Nm>
+                <PstlAdr>
+                    <StrtNm>Oak Avenue</StrtNm>
+                    <BldgNb>456</BldgNb>
+                    <PstCd>20002</PstCd>
+                    <TwnNm>London</TwnNm>
+                    <Ctry>GB</Ctry>
+                </PstlAdr>
+            </Cdtr>
+            <CdtrAcct>
+                <Id>
+                    <Othr>
+                        <Id>0987654321</Id>
+                    </Othr>
+                </Id>
+            </CdtrAcct>
+        </CdtTrfTxInf>
+    </FIToFICstmrCdtTrf>
+</Document>
 -->
                 </textarea>
                 <p class="text-sm text-gray-500 mt-2">
@@ -92,8 +140,7 @@ Sample mx message here
                 Due to the immense complexity and proprietary nature of SWIFT message conversion, this website
                 provides a front-end simulation. A real-world solution requires a dedicated back-end service or
                 specialized software to handle the intricate logic, validations, and mapping rules. The "Convert"
-                button below will show a mock conversion to demonstrate the concept. If you need the backend logic 
-                please get in touch.
+                button below will show a mock conversion to demonstrate the concept.
             </p>
         </div>
 
@@ -132,12 +179,37 @@ Sample mx message here
             }
 
             /**
+             * A helper function to validate if a string is a well-formed XML.
+             * @param {string} xmlString - The string to validate.
+             * @returns {boolean} - True if the string is valid XML, false otherwise.
+             */
+            function isValidXml(xmlString) {
+                try {
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+                    // Check for parser errors
+                    const errorNode = xmlDoc.querySelector("parsererror");
+                    if (errorNode) {
+                        return false;
+                    }
+                    return true;
+                } catch (e) {
+                    return false;
+                }
+            }
+
+            /**
              * A mock function to simulate the MX to MT conversion.
              * This function does not perform a real conversion but shows a placeholder output.
              * @param {string} mxMessage - The input MX message.
-             * @returns {string} - A mock MT message.
+             * @returns {string} - A mock MT message or an error string.
              */
             function convertMxToMt(mxMessage) {
+                // First, check if the input is a valid XML
+                if (!isValidXml(mxMessage)) {
+                    return "Error: Invalid XML format. Please paste a valid MX message.";
+                }
+
                 // This is a simplified, mock conversion.
                 // A real-world solution would involve parsing the XML,
                 // applying complex business logic, and mapping data fields
@@ -179,10 +251,16 @@ BENEFICIARY ADDRESS
 
                 // Simulate the conversion
                 const mtValue = convertMxToMt(mxValue);
-                mtOutput.value = mtValue;
 
-                if (mtValue) {
-                    showMessage("Conversion simulated. Output is a sample MT message.");
+                // Check for a returned error string
+                if (mtValue.startsWith("Error:")) {
+                    mtOutput.value = mtValue;
+                    showMessage(mtValue, 5000); // Show the error message for longer
+                } else {
+                    mtOutput.value = mtValue;
+                    if (mtValue) {
+                        showMessage("Conversion simulated. Output is a sample MT message.");
+                    }
                 }
             });
 
