@@ -179,51 +179,37 @@
             }
 
             /**
-             * A helper function to validate if a string is a well-formed XML.
-             * @param {string} xmlString - The string to validate.
-             * @returns {boolean} - True if the string is valid XML, false otherwise.
-             */
-            function isValidXml(xmlString) {
-                try {
-                    const parser = new DOMParser();
-                    const xmlDoc = parser.parseFromString(xmlString, "text/xml");
-                    // Check for parser errors
-                    const errorNode = xmlDoc.querySelector("parsererror");
-                    if (errorNode) {
-                        return false;
-                    }
-                    return true;
-                } catch (e) {
-                    return false;
-                }
-            }
-
-            /**
              * A mock function to simulate the MX to MT conversion.
-             * This function does not perform a real conversion but shows a placeholder output.
+             * This function now includes a more robust XML validation.
              * @param {string} mxMessage - The input MX message.
              * @returns {string} - A mock MT message or an error string.
              */
             function convertMxToMt(mxMessage) {
-                // First, check if the input is a valid XML
-                if (!isValidXml(mxMessage)) {
-                    return "Error: Invalid XML format. Please paste a valid MX message.";
+                // Return an error if the input is empty or just whitespace
+                if (!mxMessage.trim()) {
+                    return "Error: Please enter an MX message to convert.";
                 }
-
-                // This is a simplified, mock conversion.
-                // A real-world solution would involve parsing the XML,
-                // applying complex business logic, and mapping data fields
-                // to the MT standard.
-                // For a payment message like 'pacs.008', the equivalent MT would be 'MT103'.
-                // A real implementation would parse the XML structure and
-                // populate the MT message fields accordingly.
                 
-                // We'll just return a hardcoded sample for demonstration.
-                if (mxMessage.trim() === '') {
-                    return '';
-                }
+                try {
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(mxMessage, "text/xml");
+                    
+                    // Check for parser errors
+                    const errorNode = xmlDoc.querySelector("parsererror");
+                    if (errorNode) {
+                        return "Error: Invalid XML format. The parser encountered a syntax error.";
+                    }
+                    
+                    // Check if the root element is what we expect for an MX message
+                    if (xmlDoc.documentElement.nodeName !== 'Document') {
+                        return "Error: The XML root element is not 'Document'. This does not appear to be a valid MX message.";
+                    }
 
-                return `{1:F01BANKBEBBXXX...}
+                    // This is the simplified, mock conversion logic.
+                    // A real-world solution would parse the XML structure and
+                    // populate the MT message fields accordingly.
+                    
+                    return `{1:F01BANKBEBBXXX...}
 {2:I103BANKBEBB...}
 {3:{113:XX}{108:MT103...}}
 {4:
@@ -239,20 +225,21 @@ BENEFICIARY ADDRESS
 :71A:OUR
 -
 }`;
+
+                } catch (e) {
+                    // Catch any other potential parsing errors
+                    return "Error: An unexpected error occurred while parsing the XML.";
+                }
             }
 
             // Event listener for the "Convert" button
             convertBtn.addEventListener('click', () => {
                 const mxValue = mxInput.value;
-                if (!mxValue.trim()) {
-                    showMessage("Please enter an MX message to convert.");
-                    return;
-                }
-
+                
                 // Simulate the conversion
                 const mtValue = convertMxToMt(mxValue);
 
-                // Check for a returned error string
+                // Check for a returned error string and display the appropriate message
                 if (mtValue.startsWith("Error:")) {
                     mtOutput.value = mtValue;
                     showMessage(mtValue, 5000); // Show the error message for longer
